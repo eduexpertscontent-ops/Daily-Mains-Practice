@@ -42,11 +42,11 @@ def get_next_ias_topic(gs_paper):
         return f"Recent issues in {gs_paper}"
 
 def handle_first_run():
-    """Checks if this is the first time the script is running and sends welcome message."""
+    """Sends the welcome message once when the script is first deployed."""
     if not os.path.exists("initialized.txt"):
         welcome_text = (
             "📢 **Welcome to the Daily Mains Answer Writing Initiative!**\n\n"
-            "Targeting **2026**, this channel will now host a structured, automated daily answer writing program. "
+            "Targeting **2026**, this channel will now host a structured daily answer writing program. "
             "Every **Monday to Thursday at 5:00 PM**, you will receive a high-quality Mains question and a model answer.\n\n"
             "🗓️ **Weekly Schedule:**\n"
             "• Mon: GS-1 | Tue: GS-2 | Wed: GS-3 | Thu: GS-4\n\n"
@@ -88,7 +88,15 @@ def generate_daily_post():
     )
 
     system_role = "You are a Senior Faculty specializing in Mains Answer Writing."
-    user_prompt = f"Context: {topic_context}\nPaper: {gs_paper}\n\nTask: Create a Mains Question and Model Answer. NO TABLES. NO 'UPSC' MENTION. Bold headers."
+    user_prompt = (
+        f"Context: {topic_context}\nPaper: {gs_paper}\n\n"
+        "Task: Create a Mains Question and Model Answer.\n"
+        "STRICT RULES:\n"
+        "1. NO TABLES. Use bullet points for comparisons.\n"
+        "2. DO NOT MENTION 'UPSC'.\n"
+        "3. Use headers: **INTRODUCTION**, **BODY**, and **CONCLUSION**.\n"
+        "4. Use bold for headers."
+    )
 
     response = client.chat.completions.create(
         model="gpt-4o", 
@@ -98,7 +106,7 @@ def generate_daily_post():
     return header + response.choices[0].message.content
 
 if __name__ == "__main__":
-    handle_first_run()  # Sends welcome message ONLY on the first run
+    handle_first_run() 
     content = generate_daily_post()
     if content:
         send_to_telegram(content)
