@@ -3,13 +3,20 @@ import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import datetime
+import sys
 
 # --- Configuration ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+# Flagship GPT-5 for high-intellect synthesis
+OPENAI_MODEL = "gpt-5.1" 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+def log(msg):
+    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {msg}")
+    sys.stdout.flush()
 
 def send_to_telegram(text):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -42,23 +49,14 @@ def get_next_ias_topic(gs_paper):
         return f"Recent issues in {gs_paper}"
 
 def handle_welcome():
-    """Sends the Welcome Message if it's the very first run."""
-    if not os.path.exists("initialized.txt"):
+    if not os.path.exists("initialized_mains.txt"):
         welcome_text = (
             "📢 **Welcome to the Daily Mains Answer Writing Initiative!**\n\n"
-            "Targeting **2026**, this channel will now host a structured daily answer writing program. "
-            "Every **Monday to Thursday at 5:00 PM**, you will receive a high-quality Mains question and a model answer.\n\n"
-            "🗓️ **Weekly Schedule:**\n"
-            "• Mon: GS-1 | Tue: GS-2 | Wed: GS-3 | Thu: GS-4\n\n"
-            "📝 **What each Model Answer includes:**\n"
-            "✅ **Introduction**: Concise and context-driven.\n"
-            "✅ **The Body**: Subheadings and bullet points.\n"
-            "✅ **Value Addition**: Real-time Data, Case Studies, and Examples.\n"
-            "✅ **Conclusion**: Forward-looking and balanced.\n\n"
-            "**First question arrives now!**"
+            "Targeting **2026**, this agent uses **GPT-5 High-Reasoning** to provide "
+            "data-driven model answers every Monday to Thursday."
         )
         send_to_telegram(welcome_text)
-        with open("initialized.txt", "w") as f:
+        with open("initialized_mains.txt", "w") as f:
             f.write("initialized")
 
 def generate_daily_post():
@@ -78,7 +76,6 @@ def generate_daily_post():
     topic_context = get_next_ias_topic(gs_paper)
     quote = get_motivational_quote()
     
-    # Header format updated as requested
     header = (
         "📘 **Daily Mains Answer Writing Practice**\n"
         f"📅 **Date**: {date_str}\n"
@@ -86,25 +83,47 @@ def generate_daily_post():
         "--- --- --- --- --- --- --- ---\n\n"
     )
 
-    system_role = "You are a Senior Faculty specializing in Mains Answer Writing."
-    user_prompt = (
-        f"Context: {topic_context}\nPaper: {gs_paper}\n\n"
-        "Task: Create a Mains Question and Model Answer.\n"
-        "STRICT RULES:\n"
-        "1. NO TABLES. Use bullet points.\n"
-        "2. DO NOT MENTION 'UPSC'.\n"
-        "3. Use headers: **INTRODUCTION**, **BODY**, and **CONCLUSION**.\n"
-    )
+    log(f"Generating Data-Rich Mains Content for {gs_paper} using GPT-5...")
 
-    response = client.chat.completions.create(
-        model="gpt-4o", 
-        messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_prompt}]
-    )
-    
-    return header + response.choices[0].message.content
+    # --- GPT-5 RESPONSES API WITH EVIDENCE-BASED LOGIC ---
+    try:
+        response = client.responses.create(
+            model=OPENAI_MODEL,
+            reasoning={"effort": "high"},  # CRITICAL: High effort for evidence synthesis
+            text={"verbosity": "medium"},
+            input=[
+                {
+                    "role": "developer", 
+                    "content": (
+                        "You are an expert evaluator. Every argument must be justified with: "
+                        "1. Real-world examples. "
+                        "2. Recent data/statistics. "
+                        "3. Relevant Case Studies, Committee Reports, or Constitutional Articles."
+                    )
+                },
+                {
+                    "role": "user", 
+                    "content": (
+                        f"Context: {topic_context}\nPaper: {gs_paper}\n\n"
+                        "Task: Generate a 250-word Model Answer.\n"
+                        "STRICT RULES:\n"
+                        "- NO TABLES. Use bullet points.\n"
+                        "- Highlight keywords in **bold**.\n"
+                        "- Use sections: **QUESTION**, **INTRODUCTION**, **BODY (with evidence)**, and **WAY FORWARD/CONCLUSION**."
+                    )
+                }
+            ]
+        )
+        
+        return header + response.output_text
+
+    except Exception as e:
+        log(f"GPT-5 Error: {e}")
+        return None
 
 if __name__ == "__main__":
-    handle_welcome() # Checks and sends welcome if first run
+    handle_welcome()
     content = generate_daily_post()
     if content:
         send_to_telegram(content)
+        log("Mains post sent successfully.")
