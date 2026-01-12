@@ -52,8 +52,9 @@ def handle_welcome():
     if not os.path.exists("initialized_mains.txt"):
         welcome_text = (
             "📢 **Welcome to the Daily Mains Answer Writing Initiative!**\n\n"
-            "Targeting **2026**, this agent uses **GPT-5 High-Reasoning** to provide "
-            "data-driven model answers every Monday to Thursday."
+            "Targeting **2026**, this platform provides expert-level, "
+            "data-driven model answers every Monday to Thursday to help you "
+            "master high-quality content synthesis."
         )
         send_to_telegram(welcome_text)
         with open("initialized_mains.txt", "w") as f:
