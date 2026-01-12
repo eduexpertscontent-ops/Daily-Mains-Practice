@@ -10,8 +10,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
-# Flagship GPT-5 for high-intellect synthesis
-OPENAI_MODEL = "gpt-5.1" 
+# Using high-intellect synthesis model
+OPENAI_MODEL = "o1-preview" # Updated to a valid model name
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 def log(msg):
@@ -49,12 +49,12 @@ def get_next_ias_topic(gs_paper):
         return f"Recent issues in {gs_paper}"
 
 def handle_welcome():
+    # NOTE: Delete initialized_mains.txt from your folder to see this message update
     if not os.path.exists("initialized_mains.txt"):
         welcome_text = (
             "📢 **Welcome to the Daily Mains Answer Writing Initiative!**\n\n"
-            "Targeting **2026**, this platform provides expert-level, "
-            "data-driven model answers every Monday to Thursday to help you "
-            "master high-quality content synthesis."
+            "Targeting **2026**, this system provides high-reasoning, "
+            "data-driven model answers every Monday to Thursday."
         )
         send_to_telegram(welcome_text)
         with open("initialized_mains.txt", "w") as f:
@@ -84,24 +84,13 @@ def generate_daily_post():
         "--- --- --- --- --- --- --- ---\n\n"
     )
 
-    log(f"Generating Data-Rich Mains Content for {gs_paper} using GPT-5...")
+    log(f"Generating Data-Rich Mains Content for {gs_paper}...")
 
-    # --- GPT-5 RESPONSES API WITH EVIDENCE-BASED LOGIC ---
     try:
-        response = client.responses.create(
+        # Optimized for modern OpenAI Reasoning API structure
+        response = client.chat.completions.create(
             model=OPENAI_MODEL,
-            reasoning={"effort": "high"},  # CRITICAL: High effort for evidence synthesis
-            text={"verbosity": "medium"},
-            input=[
-                {
-                    "role": "developer", 
-                    "content": (
-                        "You are an expert evaluator. Every argument must be justified with: "
-                        "1. Real-world examples. "
-                        "2. Recent data/statistics. "
-                        "3. Relevant Case Studies, Committee Reports, or Constitutional Articles."
-                    )
-                },
+            messages=[
                 {
                     "role": "user", 
                     "content": (
@@ -110,16 +99,17 @@ def generate_daily_post():
                         "STRICT RULES:\n"
                         "- NO TABLES. Use bullet points.\n"
                         "- Highlight keywords in **bold**.\n"
-                        "- Use sections: **QUESTION**, **INTRODUCTION**, **BODY (with evidence)**, and **WAY FORWARD/CONCLUSION**."
+                        "- Use sections: **QUESTION**, **INTRODUCTION**, **BODY (with evidence)**, and **WAY FORWARD/CONCLUSION**.\n"
+                        "- Every argument must be justified with Real-world examples, Recent data, or Committee Reports."
                     )
                 }
             ]
         )
         
-        return header + response.output_text
+        return header + response.choices[0].message.content
 
     except Exception as e:
-        log(f"GPT-5 Error: {e}")
+        log(f"Error during generation: {e}")
         return None
 
 if __name__ == "__main__":
